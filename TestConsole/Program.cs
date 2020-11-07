@@ -94,19 +94,15 @@ namespace TestConsole
 </body>
 </html>";
 
-
             try
             {
                 HtmlElement htmlObject = HtmlParser.ParseRawHtml(html);
                 Console.WriteLine(JsonConvert.SerializeObject(htmlObject, Formatting.Indented));
 
-                foreach (HtmlElement e in htmlObject.GetSingleElement("html").
-                        GetSingleElement("body").
-                        GetSingleElement("div").
+                foreach (HtmlElement e in htmlObject.
+                        GetSingleElement("html", "body", "div").
                         GetElements("div").Last().
-                        GetSingleElement("svg").
-                        GetFirstElement("g").
-                        GetElements("use"))
+                        GetElements("svg", "g", "use"))
                 {
                     Console.WriteLine(Environment.NewLine);
                     Console.WriteLine("Attribute: " + e.Id);

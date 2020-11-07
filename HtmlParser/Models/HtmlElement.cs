@@ -10,7 +10,7 @@ namespace HtmlParser.Models
     /// <summary>
     /// Represents an html element like <span></span> or <div></div>
     /// </summary>
-    public class HtmlElement: HtmlObject
+    public class HtmlElement : HtmlObject
     {
         /// <summary>
         /// The html element contained in this html element
@@ -37,6 +37,16 @@ namespace HtmlParser.Models
             return Elements.First(x => x.Id.SameText(id));
         }
 
+        public HtmlElement GetFirstElement(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds)
+                element = element.GetFirstElement(id);
+
+            return element;
+        }
+
         /// <summary>
         /// Returns the first found element to the element id. Returns null if the element was not found
         /// </summary>
@@ -44,12 +54,32 @@ namespace HtmlParser.Models
         /// <returns></returns>
         public HtmlElement GetFirstOrDefaultElement(string id) => Elements?.FirstOrDefault(x => x.Id.SameText(id));
 
+        public HtmlElement GetFirstOrDefaultElement(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds)
+                element = element?.GetFirstOrDefaultElement(id);
+
+            return element;
+        }
+
         /// <summary>
         /// Returns the single found element to the element id. Throws an exception if the element was not found or it is contained more then one time
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public HtmlElement GetSingleElement(string id) => Elements?.SingleOrDefault(x => x.Id.SameText(id));
+
+        public HtmlElement GetSingleElement(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds)
+                element = element.GetSingleElement(id);
+
+            return element;
+        }
 
         /// <summary>
         /// Returns the single found element to the element id. Returns null if the element was not found and throws an exception if it is contained more then one time
@@ -63,12 +93,32 @@ namespace HtmlParser.Models
             return Elements.Single(x => x.Id.SameText(id));
         }
 
+        public HtmlElement GetSingleOrDefaultElement(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds)
+                element = element?.GetSingleOrDefaultElement(id);
+
+            return element;
+        }
+
         /// <summary>
         /// Returns all elements to the element id. Returns null if no elements were found
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public IEnumerable<HtmlElement> GetElements(string id) => Elements?.Where(x => x.Id.SameText(id));
+
+        public IEnumerable<HtmlElement> GetElements(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetSingleElement(id);
+
+            return element.GetElements(parentIds.Last());
+        }
 
         /// <summary>
         /// Returns the first found Attribute to the Attribute id. Throws an exception if the Attribute was not found
@@ -82,6 +132,16 @@ namespace HtmlParser.Models
             return Attributes.First(x => x.Id.SameText(id));
         }
 
+        public HtmlAttribute GetFirstAttribute(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetFirstElement(id);
+
+            return element.GetFirstAttribute(parentIds.Last());
+        }
+
         /// <summary>
         /// Returns the first found Attribute to the Attribute id. Returns null if the Attribute was not found
         /// </summary>
@@ -89,12 +149,32 @@ namespace HtmlParser.Models
         /// <returns></returns>
         public HtmlAttribute GetFirstOrDefaultAttribute(string id) => Attributes?.FirstOrDefault(x => x.Id.SameText(id));
 
+        public HtmlAttribute GetFirstOrDefaultAttribute(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetFirstElement(id);
+
+            return element.GetFirstOrDefaultAttribute(parentIds.Last());
+        }
+
         /// <summary>
         /// Returns the single found Attribute to the Attribute id. Throws an exception if the Attribute was not found or it is contained more then one time
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public HtmlAttribute GetSingleAttribute(string id) => Attributes?.SingleOrDefault(x => x.Id.SameText(id));
+
+        public HtmlAttribute GetSingleAttribute(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetFirstElement(id);
+
+            return element.GetSingleAttribute(parentIds.Last());
+        }
 
         /// <summary>
         /// Returns the single found Attribute to the Attribute id. Returns null if the Attribute was not found and throws an exception if it is contained more then one time
@@ -108,12 +188,32 @@ namespace HtmlParser.Models
             return Attributes.Single(x => x.Id.SameText(id));
         }
 
+        public HtmlAttribute GetSingleOrDefaultAttribute(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetFirstElement(id);
+
+            return element.GetSingleOrDefaultAttribute(parentIds.Last());
+        }
+
         /// <summary>
         /// Returns all Attributes to the Attribute id. Returns null if no Attributes were found
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public IEnumerable<HtmlAttribute> GetAttributes(string id) => Attributes?.Where(x => x.Id.SameText(id));
+
+        public IEnumerable<HtmlAttribute> GetAttributes(params string[] parentIds)
+        {
+            HtmlElement element = this;
+
+            foreach (string id in parentIds.SkipLast(1))
+                element = element.GetFirstElement(id);
+
+            return element.GetAttributes(parentIds.Last());
+        }
 
         /// <summary>
         /// Tries to fill an object of type T based on the property names or attributes
@@ -124,6 +224,5 @@ namespace HtmlParser.Models
         {
             return default(T);
         }
-
     }
 }
