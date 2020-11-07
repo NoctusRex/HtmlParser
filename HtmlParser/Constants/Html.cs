@@ -9,6 +9,7 @@ namespace HtmlParser.Constants
         public static IEnumerable<string> VoidElements => new string[] {"area", "base", "br", "col", "hr", "img", "input", "link", "meta", "param", "command", "keygen", "source"};
 
         public static string ClosingTagPrefix => "</";
+        public static string ClosingTagInlineSuffix => "/>";
         public static string OpeningTagPrefix => "<";
         public static string TagSuffix => ">";
     }

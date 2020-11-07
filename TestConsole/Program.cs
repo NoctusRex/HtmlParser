@@ -94,7 +94,6 @@ namespace TestConsole
 
             try
             {
-                //  Console.WriteLine(JsonConvert.SerializeObject(HtmlParser.Parse("https://alex-web.dev/"), Formatting.Indented));
                 Console.WriteLine(JsonConvert.SerializeObject(HtmlParser.ParseRawHtml(html), Formatting.Indented));
             }
             catch (Exception ex)

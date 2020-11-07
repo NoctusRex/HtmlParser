@@ -57,10 +57,18 @@ namespace HtmlParser
             {
                 HtmlElement element = new HtmlElement();
 
-                if (!html.Contains("<") || !html.Contains("</") || html.Count(x => x == '>') < 2)
+                if (IsHtmlFinished(html))
                 {
-                    lastElement.Content = html;
-                    return null;
+                    try
+                    {
+                        // check for void elements
+                        GetOpeningTag(html, lastProcessedIndex, out _);
+                    }
+                    catch
+                    {
+                        lastElement.Content = html;
+                        return null;
+                    }
                 }
 
                 string openingTag = GetOpeningTag(html, lastProcessedIndex, out lastProcessedIndex);
@@ -70,7 +78,12 @@ namespace HtmlParser
                 element.Id = openingTagName;
                 element.Attributes = ParseAttributes(openingTag);
 
-                if (Html.VoidElements.Contains(openingTagName))
+                if (openingTagName == "a")
+                {
+
+                }
+
+                if (Html.VoidElements.Contains(openingTagName) || openingTag.EndsWith(Html.ClosingTagInlineSuffix))
                 {
                     lastProcessedIndex++;
                 }
@@ -79,18 +92,19 @@ namespace HtmlParser
                     int closingTagStartIndex = GetClosingTagStartIndex(html, lastProcessedIndex + 1 - openingTag.Length, Html.OpeningTagPrefix + openingTagName + Html.TagSuffix, closingTag);
                     element.Elements = ParseElements(html.Substring(lastProcessedIndex + 1, closingTagStartIndex - 1 - lastProcessedIndex), element);
                     lastProcessedIndex = closingTagStartIndex + closingTag.Length;
-
-                    if (!html.Substring(lastProcessedIndex).Contains("<") ||
-                        !html.Substring(lastProcessedIndex).Contains("</") ||
-                        html.Substring(lastProcessedIndex).Count(x => x == '>') < 2)
-                        lastProcessedIndex = html.Length;
                 }
+
+                if (IsHtmlFinished(html.Substring(lastProcessedIndex))) lastProcessedIndex = html.Length;
 
                 elements.Add(element);
             }
 
             return elements;
         }
+
+        private bool IsHtmlFinished(string html) => !html.Contains(Html.OpeningTagPrefix) ||
+                    (!html.Contains(Html.ClosingTagPrefix) && !html.Contains(Html.ClosingTagInlineSuffix)) ||
+                    !html.Contains(Html.TagSuffix);
 
         private string GetOpeningTag(string html, int startIndex, out int endIndex)
         {
@@ -190,7 +204,7 @@ namespace HtmlParser
                 attributes.Add(new HtmlAttribute()
                 {
                     Id = attribute.Split('=')[0],
-                    Value = attribute.Split('=')[1]
+                    Value = attribute.Split('=')[1] + '"'
                 });
             }
 
