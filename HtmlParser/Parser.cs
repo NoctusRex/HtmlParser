@@ -55,7 +55,10 @@ namespace HtmlParser
 
             while (lastProcessedIndex < html.Length)
             {
-                HtmlElement element = new HtmlElement();
+                HtmlElement element = new HtmlElement
+                {
+                    ParentId = lastElement?.Id
+                };
 
                 if (IsHtmlFinished(html))
                 {
@@ -77,11 +80,6 @@ namespace HtmlParser
 
                 element.Id = openingTagName;
                 element.Attributes = ParseAttributes(openingTag);
-
-                if (openingTagName == "a")
-                {
-
-                }
 
                 if (Html.VoidElements.Contains(openingTagName) || openingTag.EndsWith(Html.ClosingTagInlineSuffix))
                 {
@@ -204,7 +202,8 @@ namespace HtmlParser
                 attributes.Add(new HtmlAttribute()
                 {
                     Id = attribute.Split('=')[0],
-                    Value = attribute.Split('=')[1] + '"'
+                    Value = attribute.Split('=')[1] + '"',
+                    ParentId = GetRawTagName(parentTag)
                 });
             }
 

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using HtmlParser;
+using HtmlParser.Models;
 using Newtonsoft.Json;
 
 namespace TestConsole
@@ -92,9 +94,28 @@ namespace TestConsole
 </body>
 </html>";
 
+
             try
             {
-                Console.WriteLine(JsonConvert.SerializeObject(HtmlParser.ParseRawHtml(html), Formatting.Indented));
+                HtmlElement htmlObject = HtmlParser.ParseRawHtml(html);
+                Console.WriteLine(JsonConvert.SerializeObject(htmlObject, Formatting.Indented));
+
+                foreach (HtmlElement e in htmlObject.GetSingleElement("html").
+                        GetSingleElement("body").
+                        GetSingleElement("div").
+                        GetElements("div").Last().
+                        GetSingleElement("svg").
+                        GetFirstElement("g").
+                        GetElements("use"))
+                {
+                    Console.WriteLine(Environment.NewLine);
+                    Console.WriteLine("Attribute: " + e.Id);
+                    Console.WriteLine(string.Join(Environment.NewLine, e.Attributes.Select(x => x.Id + " = " + x.Value)));
+                }
+
+                Console.WriteLine(Environment.NewLine);
+                FindAllLinks(htmlObject);
+
             }
             catch (Exception ex)
             {
@@ -102,7 +123,26 @@ namespace TestConsole
             }
 
             Console.ReadKey();
+        }
+
+        private static void FindAllLinks(HtmlElement html)
+        {
+            if (html.Elements is null) return;
+
+            foreach (HtmlElement e in html.Elements)
+            {
+                if (e.Attributes != null)
+                {
+                    foreach (HtmlAttribute a in e.GetAttributes("href").Where(x => x.ParentId == "a"))
+                    {
+                        Console.WriteLine(a.Value);
+                    }
+                }
+
+                FindAllLinks(e);
+            }
 
         }
+
     }
 }
