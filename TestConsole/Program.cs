@@ -109,6 +109,11 @@ namespace TestConsole
                     Console.WriteLine(string.Join(Environment.NewLine, e.Attributes.Select(x => x.Id + " = " + x.Value)));
                 }
 
+                Use use = htmlObject.
+                         GetSingleElement("html", "body", "div").
+                         GetElements("div").Last().
+                         GetFirstElement("svg", "g", "use").FillObject<Use>();
+
                 Console.WriteLine(Environment.NewLine);
                 FindAllLinks(htmlObject);
 

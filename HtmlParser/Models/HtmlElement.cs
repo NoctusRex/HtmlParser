@@ -1,7 +1,9 @@
-﻿using HtmlParser.Extensions;
+﻿using HtmlParser.Attributes;
+using HtmlParser.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -222,7 +224,48 @@ namespace HtmlParser.Models
         /// <returns></returns>
         public T FillObject<T>()
         {
-            return default(T);
+            T result = (T)Activator.CreateInstance(typeof(T));
+
+            foreach (PropertyInfo property in result.GetType().GetProperties())
+            {
+                Attributes.HtmlAttribute attribute = property.GetCustomAttribute<Attributes.HtmlAttribute>();
+
+                if (attribute is null)
+                {
+
+                    string id = property.Name;
+                    if (id.SameText("Content"))
+                    {
+                        property.SetValue(result, Convert.ChangeType(Content, property.PropertyType));
+                        continue;
+                    }
+
+                    SetValue(property, result, GetFirstOrDefaultAttribute(id));
+                }
+                else
+                {
+                    if (attribute is AttributeAttribute)
+                    {
+                        SetValue(property, result, GetFirstOrDefaultAttribute(attribute.Id));
+                    }
+                    else if (attribute is ElementAttribute)
+                    {
+
+                    }
+                    else if (attribute is IgnoreAttribute)
+                        continue;
+
+                }
+
+            }
+
+            return result;
+        }
+
+        private void SetValue(PropertyInfo property, object @object, HtmlAttribute value)
+        {
+            if (value != null)
+                property.SetValue(@object, Convert.ChangeType(value.Value, property.PropertyType));
         }
     }
 }

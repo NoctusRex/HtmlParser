@@ -202,7 +202,7 @@ namespace HtmlParser
                 attributes.Add(new HtmlAttribute()
                 {
                     Id = attribute.Split('=')[0],
-                    Value = attribute.Split('=')[1] + '"',
+                    Value = attribute.Split('=')[1].Trim().Trim('"'),
                     ParentId = GetRawTagName(parentTag)
                 });
             }
