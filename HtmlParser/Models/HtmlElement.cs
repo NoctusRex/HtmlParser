@@ -222,39 +222,39 @@ namespace HtmlParser.Models
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T FillObject<T>()
+        public T FillObject<T>() => (T)FillObject(typeof(T));
+
+        public object FillObject(Type type)
         {
-            T result = (T)Activator.CreateInstance(typeof(T));
+            object result = Activator.CreateInstance(type);
 
             foreach (PropertyInfo property in result.GetType().GetProperties())
             {
                 Attributes.HtmlAttribute attribute = property.GetCustomAttribute<Attributes.HtmlAttribute>();
+                string id = attribute?.Id != null ? attribute.Id : property.Name;
+
+                if (id.SameText("Content"))
+                {
+                    property.SetValue(result, Convert.ChangeType(Content, property.PropertyType));
+                    continue;
+                }
 
                 if (attribute is null)
                 {
-
-                    string id = property.Name;
-                    if (id.SameText("Content"))
-                    {
-                        property.SetValue(result, Convert.ChangeType(Content, property.PropertyType));
-                        continue;
-                    }
-
-                    SetValue(property, result, GetFirstOrDefaultAttribute(id));
+                    HtmlObject value = GetFirstOrDefaultAttribute(id);
+                    if (value != null)
+                        SetValue(property, result, ((HtmlAttribute)value).Value, false);
+                    else
+                        FillElement(property, result, id);
                 }
                 else
                 {
                     if (attribute is AttributeAttribute)
-                    {
-                        SetValue(property, result, GetFirstOrDefaultAttribute(attribute.Id));
-                    }
+                        SetValue(property, result, GetFirstOrDefaultAttribute(id).Value, false);
                     else if (attribute is ElementAttribute)
-                    {
-
-                    }
+                        FillElement(property, result, id);
                     else if (attribute is IgnoreAttribute)
                         continue;
-
                 }
 
             }
@@ -262,10 +262,30 @@ namespace HtmlParser.Models
             return result;
         }
 
-        private void SetValue(PropertyInfo property, object @object, HtmlAttribute value)
+        private void FillElement(PropertyInfo property, object result, string id)
+        {
+            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(property.PropertyType))
+            {
+                var list = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(property.PropertyType.GenericTypeArguments.First()));
+
+                foreach (HtmlElement e in GetElements(id))
+                    list.Add(e.FillObject(property.PropertyType.GenericTypeArguments.First()));
+
+                SetValue(property, result, list, true);
+            }
+            else
+            {
+                SetValue(property, result, GetSingleElement(id).FillObject(property.PropertyType), false);
+            }
+        }
+
+        private void SetValue(PropertyInfo property, object @object, object value, bool isEnumberable)
         {
             if (value != null)
-                property.SetValue(@object, Convert.ChangeType(value.Value, property.PropertyType));
+                if (isEnumberable)
+                    property.SetValue(@object, value);
+                else
+                    property.SetValue(@object, Convert.ChangeType(value, property.PropertyType));
         }
     }
 }

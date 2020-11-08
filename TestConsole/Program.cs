@@ -8,7 +8,7 @@ namespace TestConsole
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Parser HtmlParser = new Parser();
             string html = @"<!DOCTYPE html>
@@ -109,10 +109,14 @@ namespace TestConsole
                     Console.WriteLine(string.Join(Environment.NewLine, e.Attributes.Select(x => x.Id + " = " + x.Value)));
                 }
 
-                Use use = htmlObject.
+                Console.WriteLine(Environment.NewLine);
+
+                Console.WriteLine(JsonConvert.SerializeObject(
+                         htmlObject.
                          GetSingleElement("html", "body", "div").
                          GetElements("div").Last().
-                         GetFirstElement("svg", "g", "use").FillObject<Use>();
+                         GetFirstElement("svg").FillObject<Svg>(), 
+                         Formatting.Indented));
 
                 Console.WriteLine(Environment.NewLine);
                 FindAllLinks(htmlObject);
