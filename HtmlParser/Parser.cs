@@ -82,17 +82,28 @@ namespace HtmlParser
                 element.Attributes = ParseAttributes(openingTag);
 
                 if (Html.VoidElements.Contains(openingTagName) || openingTag.EndsWith(Html.ClosingTagInlineSuffix))
-                {
                     lastProcessedIndex++;
-                }
                 else
                 {
                     int closingTagStartIndex = GetClosingTagStartIndex(html, lastProcessedIndex + 1 - openingTag.Length, Html.OpeningTagPrefix + openingTagName + Html.TagSuffix, closingTag);
-                    element.Elements = ParseElements(html.Substring(lastProcessedIndex + 1, closingTagStartIndex - 1 - lastProcessedIndex), element);
+
+                    string subHtml = html.Substring(lastProcessedIndex + 1, closingTagStartIndex - 1 - lastProcessedIndex);
+                    string content = string.Empty;
+
+                    // content behind potential emlements is not supposed to be parsed, because it would then be lost
+                    while (!IsHtmlFinished(subHtml) && !subHtml.EndsWith(Html.ClosingTagInlineSuffix) && !subHtml.EndsWith(Html.TagSuffix))
+                    {
+                        content = content.Insert(0, subHtml.Substring(subHtml.Length - 1, 1));
+                        subHtml = subHtml.Remove(subHtml.Length - 1, 1);
+                    }
+
+                    element.Content = content;
+                    element.Elements = ParseElements(subHtml, element);
+
                     lastProcessedIndex = closingTagStartIndex + closingTag.Length;
                 }
 
-                if (IsHtmlFinished(html.Substring(lastProcessedIndex))) lastProcessedIndex = html.Length;
+                if (IsHtmlFinished(html[lastProcessedIndex..])) lastProcessedIndex = html.Length;
 
                 elements.Add(element);
             }
@@ -145,7 +156,7 @@ namespace HtmlParser
                 {
                     if (i < html.Length && html[i + 1] != '/')
                     {
-                        if (GetNextTagWithoutAttributes(html.Substring(i)).SameText(openingTag))
+                        if (GetNextTagWithoutAttributes(html[i..]).SameText(openingTag))
                         {
                             st.Push((int)html[i]);
                             continue;
@@ -153,7 +164,7 @@ namespace HtmlParser
                     }
                     else // if is closing tag pop from stack
                     {
-                        if (GetNextTagWithoutAttributes(html.Substring(i)).SameText(closingTag))
+                        if (GetNextTagWithoutAttributes(html[i..]).SameText(closingTag))
                         {
                             st.Pop();
                             if (st.Count == 0) return i;
@@ -202,7 +213,7 @@ namespace HtmlParser
                 attributes.Add(new HtmlAttribute()
                 {
                     Id = attribute.Split('=')[0],
-                    Value = attribute.Split('=')[1].Trim().Trim('"'),
+                    Value = string.Join("=", attribute.Split('=').Skip(1)).Trim().Trim('"'),
                     ParentId = GetRawTagName(parentTag)
                 });
             }
